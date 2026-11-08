@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>长城竞速 · 선생님 사용 설명서</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Noto+Sans+KR:wght@400;700;900&family=Noto+Sans+SC:wght@500&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: linear-gradient(180deg, #f6e8c8, #efdcb4); }
+    .guide { width: min(860px, calc(100% - 24px)); margin: 24px auto 60px; }
+    .g-hero { text-align: center; padding: 26px 18px 18px; background: linear-gradient(180deg, #d8432f, #9f2a1c); color: #fff; border: 4px solid var(--ink); border-radius: 24px; box-shadow: 0 8px 0 var(--ink); }
+    .g-hero h1 { margin: 0; font-family: var(--font-zh-fun); font-weight: 400; font-size: clamp(40px, 8vw, 64px); color: var(--gold); text-shadow: 0 4px 0 #4a0d06; }
+    .g-hero p { margin: 6px 0 0; font-family: var(--font-fun); font-size: 19px; }
+    .g-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+    .g-sec { background: var(--paper); border: 3px solid var(--ink); border-radius: 20px; padding: 18px clamp(16px, 4vw, 30px); margin-top: 18px; box-shadow: 0 5px 0 var(--ink); line-height: 1.7; }
+    .g-sec h2 { margin: 0 0 8px; font-family: var(--font-head); font-weight: 400; color: var(--red); font-size: 26px; }
+    .g-sec h3 { margin: 14px 0 4px; font-family: var(--font-fun); font-weight: 400; font-size: 19px; }
+    .g-steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    .g-steps > li { counter-increment: s; position: relative; padding: 10px 14px 10px 58px; background: #fff; border: 2px solid #ecdcb9; border-radius: 14px; }
+    .g-steps > li::before { content: counter(s); position: absolute; left: 12px; top: 10px; width: 34px; height: 34px; border-radius: 50%; background: var(--red-2); color: #fff; display: grid; place-items: center; font-family: var(--font-head); font-size: 19px; border: 2px solid var(--ink); }
+    .g-steps b { font-family: var(--font-fun); font-weight: 400; font-size: 18px; }
+    .say { background: #fff3cf; border-left: 6px solid var(--gold-d); border-radius: 10px; padding: 10px 14px; font-weight: 700; }
+    .g-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; font-size: 15px; }
+    .g-table th, .g-table td { padding: 7px 10px; border-bottom: 1px solid #f0e3c6; text-align: left; vertical-align: top; }
+    .g-table th { background: var(--red); color: #fff; font-family: var(--font-fun); font-weight: 400; }
+    .ok { color: var(--ok); font-weight: 800; } .no { color: var(--bad); font-weight: 800; }
+    details { background: #fff; border: 2px solid #ecdcb9; border-radius: 12px; padding: 8px 12px; margin-top: 8px; }
+    summary { cursor: pointer; font-weight: 800; }
+    @media print {
+      body { background: #fff; }
+      .g-btns { display: none !important; }
+      .g-sec, .g-hero { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="guide">
+    <header class="g-hero">
+      <h1 lang="zh">长城竞速</h1>
+      <p>선생님 사용 설명서 · 가입도 설치도 필요 없어요</p>
+      <div class="g-btns">
+        <a class="btn btn-gold" href="teacher.html">👩‍🏫 단어장 링크 만들기</a>
+        <a class="btn btn-ghost" href="index.html">🐼 학생 화면 해 보기</a>
+        <button class="btn btn-ghost" type="button" onclick="window.print()">🖨️ 인쇄하기</button>
+      </div>
+    </header>
+
+    <section class="g-sec">
+      <h2>🏯 어떤 게임인가요?</h2>
+      <p>화면에 <b>한국어 뜻</b>이 나오면 학생이 <b>중국어 병음</b>을 입력합니다. 맞힐 때마다 캐릭터가 만리장성을 <b>100m</b>씩 달려요.
+        <b>제한 시간(기본 5분) 동안 누가 가장 멀리 가는지</b> 겨루는 게임이에요.</p>
+      <ul>
+        <li>학생은 <b>각자 자기 기기</b>(컴퓨터·태블릿·휴대폰)에서 해요. 로그인·서버·설치가 전혀 없어요.</li>
+        <li>끝나면 <b>결과 카드</b>(이름·단어장·날짜·거리·정확도)가 나와요. 선생님은 그 화면을 보고 확인하면 돼요.</li>
+        <li>같은 기기에서 다시 하면 그 기기의 <b>최고 기록이 유령 캐릭터</b>로 옆에서 함께 달려요.</li>
+      </ul>
+    </section>
+
+    <section class="g-sec">
+      <h2>🏁 수업 순서</h2>
+      <ol class="g-steps">
+        <li><b>단어장 링크 만들기</b> — <a href="teacher.html">단어장 링크 만들기</a>에서 이름(예: 2학년 5단원)과 시간을 정하고 단어를 넣으면 <b>학생용 링크와 QR 코드</b>가 바로 생겨요.</li>
+        <li><b>나눠 주기</b> — <b>🖥️ QR 크게 띄우기</b>로 TV·전자칠판에 QR을 띄우거나, <b>🔗 링크 복사</b>로 클래스룸·학급 SNS·메신저에 올려요.</li>
+        <li><b>각자 달리기</b> — 학생들은 링크를 열고 이름·캐릭터를 고른 뒤 출발! “다 같이 출발!” 하고 동시에 시작하면 더 신나요.</li>
+        <li><b>결과 확인</b> — 끝나면 학생 화면에 결과 카드가 나와요. 손을 들게 해서 거리를 묻거나, 화면을 캡처해 제출하게 하세요.</li>
+      </ol>
+      <p class="help">기본 주제(인사·가족·숫자·음식·학교생활·동사·날짜)로 바로 하려면 링크 없이 사이트 첫 화면에서 주제를 고르면 돼요.</p>
+    </section>
+
+    <section class="g-sec">
+      <h2>📝 단어장 만들기</h2>
+      <h3>방법 1. 보관함에서 고르기</h3>
+      <p>왼쪽 <b>📚 단어장 보관함</b>에서 주제를 누르고, 필요하면 고쳐 쓰세요.</p>
+      <h3>방법 2. 엑셀에서 복사·붙여넣기</h3>
+      <p>엑셀에 <b>한국어 뜻 | 중국어 | 병음</b> 세 칸으로 정리 → 드래그해서 복사(Ctrl+C) → 입력칸에 붙여넣기(Ctrl+V).
+        번호 칸이나 제목 줄은 자동으로 빠지고, <code>píngguǒ</code>처럼 성조 기호가 있어도 괜찮아요. <b>⬇️ 엑셀 양식</b>을 받아 써도 돼요.</p>
+      <h3>방법 3. CSV 파일 열기</h3>
+      <p>엑셀에서 <b>CSV UTF-8</b>로 저장한 파일을 <b>📂 CSV 파일 열기</b>로 읽어요. (일반 CSV는 한자가 깨질 수 있어요)</p>
+      <h3>💡 다음에 또 쓰려면</h3>
+      <p><b>💾 이 컴퓨터에 저장</b>을 누르거나, 만든 <b>학생용 링크</b>를 잘 보관해 두세요. 링크를 <b>받은 링크로 고치기</b> 칸에 붙여넣으면 언제든 다시 고칠 수 있어요. 다른 선생님께 링크를 보내면 그 선생님도 그대로 쓰거나 고쳐 쓸 수 있어요.</p>
+    </section>
+
+    <section class="g-sec">
+      <h2>🗣️ 학생들에게 이렇게 말해 주세요</h2>
+      <p class="say">“한/영 키를 <u>영어</u>로 바꾸세요! 성조는 안 써도 되고, 띄어쓰기도 상관없어요. 다 쓰면 <u>Enter</u>! 끝나면 결과 화면을 보여 주세요.”</p>
+      <table class="g-table">
+        <tr><th>학생 입력 (사과 → 苹果)</th><th>결과</th></tr>
+        <tr><td><code>pingguo</code> · <code>Pingguo</code> · <code>ping guo</code> · <code>píngguǒ</code></td><td class="ok">정답</td></tr>
+        <tr><td><code>pinguo</code> (철자 틀림)</td><td class="no">오답 — 다시 입력</td></tr>
+        <tr><td>한/영을 깜빡해서 <code>ㅔㅑㅜㅎ혀ㅐ</code></td><td class="ok">자동으로 영어로 바꿔 채점 + 안내</td></tr>
+        <tr><td>ü가 있는 단어 (绿 lǜ)</td><td><code>lv</code> · <code>lu</code> 모두 정답</td></tr>
+      </table>
+    </section>
+
+    <section class="g-sec">
+      <h2>❓ 자주 묻는 질문</h2>
+      <details><summary>학생 기록은 어디에 저장되나요?</summary><p>서버가 없어서 따로 모이지 않아요. 결과는 학생 화면의 결과 카드로 확인하고, 필요하면 캡처해서 제출하게 하세요. 그 기기의 최고 기록만 브라우저에 남아요(유령 캐릭터용).</p></details>
+      <details><summary>학생이 여러 번 해도 되나요?</summary><p>네, 몇 번이든 할 수 있어요. 공식 기록이 필요하면 “첫 번째 기록만 인정” 같은 규칙을 정해 주세요.</p></details>
+      <details><summary>컴퓨터실에서 다음 반이 같은 컴퓨터를 써요</summary><p>괜찮아요. 매번 이름을 새로 입력해요. 유령 캐릭터는 그 컴퓨터의 최고 기록(앞 반 학생일 수도 있어요)이라 오히려 경쟁이 돼요.</p></details>
+      <details><summary>“단어장 링크가 잘렸어요”라고 나와요</summary><p>메신저가 긴 링크의 일부만 복사한 경우예요. 링크 전체를 다시 보내거나 QR 코드를 쓰세요.</p></details>
+      <details><summary>소리가 안 나요</summary><p>화면을 한 번 클릭해야 소리가 켜져요(브라우저 규칙). 오른쪽 위 🔊 버튼도 확인해 주세요.</p></details>
+      <details><summary>휴대폰으로도 되나요?</summary><p>네. 다만 타자 연습 효과는 키보드가 있는 컴퓨터가 더 좋아요.</p></details>
+      <details><summary>인터넷이 끊기면요?</summary><p>페이지가 한 번 열린 뒤에는 인터넷 없이도 끝까지 할 수 있어요.</p></details>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>长城竞速 · 단어장 링크 만들기</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Noto+Sans+KR:wght@400;700;900&family=Noto+Sans+SC:wght@500;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/teacher.css">
+</head>
+<body class="teacher maker">
+  <header class="t-header">
+    <div class="t-brand"><span lang="zh">长城竞速</span> <small>단어장 링크 만들기</small></div>
+    <div class="t-user">
+      <a class="btn btn-ghost btn-sm" href="guide.html" target="_blank" rel="noopener">📖 사용 설명서</a>
+      <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener">🐼 학생 화면</a>
+    </div>
+  </header>
+
+  <main class="mk">
+    <p class="mk-intro">로그인도 서버도 필요 없어요. 단어를 넣으면 <b>학생용 링크와 QR 코드</b>가 바로 만들어져요. 단어는 링크 안에 들어 있어서, 학생이 링크를 열면 그 단어로 게임을 해요.</p>
+
+    <section class="mk-card">
+      <h2><span class="mk-num">1</span> 단어장 이름과 시간</h2>
+      <div class="mk-row">
+        <label class="field"><span>단어장 이름 <small>(학생 화면·결과 카드에 나와요)</small></span>
+          <input id="mk-title" maxlength="30" placeholder="예: 2학년 5단원 단어"></label>
+        <label class="field"><span>제한 시간</span>
+          <select id="mk-time">
+            <option value="60">1분</option><option value="120">2분</option><option value="180">3분</option><option value="240">4분</option>
+            <option value="300" selected>5분 (기본)</option><option value="420">7분</option><option value="600">10분</option>
+          </select></label>
+        <label class="switch mk-shuffle"><input id="mk-shuffle" type="checkbox" checked><span>문제 순서 섞기</span></label>
+      </div>
+    </section>
+
+    <section class="mk-card">
+      <h2><span class="mk-num">2</span> 단어 넣기</h2>
+      <div class="words-layout">
+        <aside class="wordlib">
+          <h3>📚 단어장 보관함</h3>
+          <p class="help">눌러서 불러온 뒤 고쳐 쓰세요.</p>
+          <div class="lib-group"><h4>기본 제공 주제</h4><ul id="lib-presets" class="lib-list"></ul></div>
+          <div class="lib-group"><h4>이 컴퓨터에 저장한 단어장</h4><ul id="lib-mine" class="lib-list"></ul></div>
+          <div class="lib-group"><h4>받은 링크로 고치기</h4>
+            <input id="mk-paste-link" class="mk-link-in" placeholder="학생용 링크를 붙여넣기" spellcheck="false">
+          </div>
+        </aside>
+        <div class="words-edit">
+          <div class="words-grid">
+            <div>
+              <h3>단어 목록 <small id="words-count"></small></h3>
+              <p class="help">엑셀/구글시트에서 <b>한국어 뜻 · 중국어 · 병음</b> 칸을 드래그해 복사(Ctrl+C)한 뒤 붙여넣기(Ctrl+V). 번호 칸·제목 줄은 자동으로 빠지고, 성조 기호(píngguǒ)가 있어도 괜찮아요. 직접 쓸 때는 칸 사이를 <kbd>Tab</kbd>으로.</p>
+              <textarea id="words-text" rows="14" spellcheck="false" placeholder="사과	苹果	pingguo&#10;학교	学校	xuexiao&#10;..."></textarea>
+              <div class="row-actions">
+                <label class="btn btn-ghost btn-sm file-btn">📂 CSV 파일 열기<input type="file" id="words-file" accept=".csv,.txt,text/csv,text/plain" hidden></label>
+                <button class="btn btn-ghost btn-sm" type="button" id="btn-template">⬇️ 엑셀 양식</button>
+                <button class="btn btn-gold btn-sm" type="button" id="btn-save-local">💾 이 컴퓨터에 저장</button>
+              </div>
+              <p id="words-msg" class="help"></p>
+            </div>
+            <div>
+              <h3>미리보기</h3>
+              <div class="table-scroll"><table class="rank-table" id="words-preview"></table></div>
+              <ul id="words-errors" class="errors"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mk-card mk-out" id="mk-out">
+      <h2><span class="mk-num">3</span> 학생들에게 나눠 주기</h2>
+      <div id="mk-empty" class="help">단어를 넣으면 여기에 링크와 QR 코드가 생겨요.</div>
+      <div id="mk-ready" class="join-info hidden">
+        <div class="join-qr" id="mk-qr"></div>
+        <div class="join-steps">
+          <p class="js-step"><b>1</b> 학생들이 휴대폰 카메라로 <b>QR 코드</b>를 찍거나, 아래 <b>링크</b>를 클래스룸·학급 SNS·메신저로 받아 열어요.</p>
+          <p class="js-step"><b>2</b> 이름과 캐릭터를 고르고 <b>출발!</b> 각자 <span id="mk-time-label">5분</span> 동안 달려요.</p>
+          <p class="js-step"><b>3</b> 끝나면 나오는 <b>결과 카드</b>를 확인해 주세요.</p>
+          <textarea id="mk-link" class="mk-link" rows="3" readonly></textarea>
+          <p id="mk-qr-note" class="help"></p>
+        </div>
+      </div>
+      <div class="row-actions center" id="mk-actions">
+        <button class="btn btn-red" type="button" id="btn-copy" disabled>🔗 링크 복사</button>
+        <button class="btn btn-gold" type="button" id="btn-big" disabled>🖥️ QR 크게 띄우기</button>
+        <button class="btn btn-ghost" type="button" id="btn-preview" disabled>🐼 학생 화면으로 해 보기</button>
+        <button class="btn btn-ghost" type="button" id="btn-print" disabled>🖨️ 인쇄</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- QR 크게 (프로젝터) -->
+  <div id="bigqr" class="bigqr hidden">
+    <div class="bq-box">
+      <div class="bq-title"><span lang="zh">长城竞速</span> <b id="bq-name"></b></div>
+      <div class="bq-qr" id="bq-qr"></div>
+      <p class="bq-tip">📱 카메라로 QR 코드를 찍어 들어오세요! · ⏱️ <span id="bq-time"></span> · ⌨️ 한/영 키는 <b>영어</b>로</p>
+      <button class="btn btn-ghost btn-sm" type="button" id="btn-big-close">닫기 ✕</button>
+    </div>
+  </div>
+
+  <!-- 불러오기 방식 -->
+  <div id="modal-load" class="modal" aria-hidden="true" role="dialog" aria-labelledby="load-title">
+    <div class="modal-box">
+      <button class="modal-x" type="button" data-close aria-label="닫기">✕</button>
+      <h2 id="load-title">📚 단어장 불러오기</h2>
+      <p id="load-text"></p>
+      <div class="reset-options">
+        <button class="btn btn-red btn-block" type="button" data-load="replace">지금 단어를 <b>바꾸기</b></button>
+        <button class="btn btn-gold btn-block" type="button" data-load="append">지금 단어 뒤에 <b>덧붙이기</b></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="topbar"><button id="btn-sound" class="icon-btn hidden" type="button" aria-hidden="true">🔊</button></div>
+  <div id="toast-wrap"></div>
+  <script type="module" src="js/teacher.js"></script>
+</body>
+</html>
