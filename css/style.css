@@ -1,3 +1,5 @@
+/* 한어병음 글꼴 (Asia병음 · 라틴·병음 글자만 남긴 가벼운 파일) */
+@font-face { font-family: 'Asia Pinyin'; src: url('../assets/fonts/asia-pinyin.woff') format('woff'); font-display: swap; }
 /* =====================================================================
    长城竞速 — 스타일
    팔레트: 궁궐 붉은색 · 황금 · 성벽 돌색 · 산 초록 · 하늘
@@ -26,6 +28,7 @@
   --font-ko: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-fun: 'Jua', 'Noto Sans KR', sans-serif;
   --font-head: 'Black Han Sans', 'Jua', sans-serif;
+  --font-py: 'Asia Pinyin', 'Noto Sans KR', Arial, sans-serif;
   --font-zh: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-zh-fun: 'ZCOOL KuaiLe', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   --radius: 18px;
@@ -891,3 +894,85 @@ body[data-screen="game"] .net-badge.off { background: #bbb; }
   #cert { position: absolute; left: 0; top: 0; box-shadow: none; }
 }
 .sky-start span { white-space: nowrap; }
+
+/* 성조 */
+.tone-pick { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; font-weight: 800; font-size: 15px; cursor: pointer; flex-wrap: wrap; }
+.tone-pick input { width: 20px; height: 20px; accent-color: var(--red); }
+.tone-pick small { font-weight: 500; color: #7a6450; }
+.tone-badge { font-style: normal; font-weight: 800; color: var(--red); }
+.tone-tip { color: #7a4ec2; font-weight: 800; animation: pulse .6s infinite alternate; }
+.answer-hint kbd { font-size: .8em; }
+
+/* =====================================================================
+   끝없는 만리장성 트랙 (v5)
+   ===================================================================== */
+.et { --sky-h: 84px; --lane-h: 80px; --RW: 62px; --scroll: 0px; --S: 36px;
+  position: relative; height: 100%; overflow: hidden; border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink);
+  background-color: #b58c58;
+  background-image: linear-gradient(rgba(70, 40, 12, .28) 2px, transparent 2px), linear-gradient(90deg, rgba(70, 40, 12, .22) 2px, transparent 2px);
+  background-size: 100% 22px, 44px 22px; background-position-x: var(--scroll); }
+.et-sky { position: relative; height: var(--sky-h); overflow: hidden; border-bottom: 3px solid var(--ink);
+  background: linear-gradient(180deg, #7cc8f2 0%, #c8ecff 70%, #e8f7ff 100%); }
+.et-sky .cloud { transform: scale(.55); opacity: .85; }
+.et-sky .c1 { top: 16px; left: 10%; animation: drift 70s linear infinite; }
+.et-sky .c2 { top: 6px; left: 50%; animation: drift 90s linear infinite -30s; }
+.et-sky .c3 { top: 24px; left: 80%; animation: drift 110s linear infinite -60s; }
+.et-mtn { position: absolute; left: 0; bottom: 0; display: flex; height: 62px; will-change: transform; }
+.et-mtn svg { width: 1600px; height: 62px; flex: none; display: block; }
+.et-lanes { position: relative; }
+.et .lane, .et .lane::after { background-position-x: var(--scroll); }
+.et .lane::before { background-position-x: var(--scroll); -webkit-mask-position-x: var(--scroll); mask-position-x: var(--scroll); }
+.et .lane-num { font-family: var(--font-fun); font-size: 14px; }
+.et .runner { position: absolute; transition: none; }
+.et .tag { font-size: max(11px, calc(var(--lane-h) * .18)); max-width: none; }
+.et .lane.far .runner .char { opacity: .35; }
+.tag-gap { color: #4a5a8a; font-weight: 900; }
+
+.et-marks { position: absolute; left: 0; top: 0; bottom: 0; width: 0; z-index: 3; pointer-events: none; will-change: transform; }
+.et-mark { position: absolute; top: 0; bottom: 0; width: 0; }
+.et-mark::after { content: ''; position: absolute; top: var(--sky-h); bottom: 0; left: 0; border-left: 2px dashed rgba(90, 50, 15, .32); }
+.et-mark .mk-label { position: absolute; top: calc(var(--sky-h) - 22px); left: 0; transform: translateX(-50%); white-space: nowrap;
+  font-size: 11px; font-weight: 800; color: #5a3d1e; background: rgba(255, 255, 255, .8); border-radius: 6px; padding: 0 5px; }
+.mk-tower svg { position: absolute; left: -17px; top: calc(var(--sky-h) - 46px); width: 34px; height: 40px; }
+.mk-tower .mk-label { top: calc(var(--sky-h) - 64px); font-family: var(--font-zh-fun); font-size: 13px; color: var(--red-d); }
+.mk-tower::after { border-left: 3px solid rgba(192, 57, 43, .45); }
+.mk-gate svg { position: absolute; left: -35px; top: calc(var(--sky-h) - 62px); width: 70px; height: 60px; }
+.mk-gate .mk-label { top: calc(var(--sky-h) - 82px); font-family: var(--font-head); font-weight: 400; font-size: 18px; color: #fff;
+  background: var(--red-2); border: 2px solid var(--ink); padding: 0 8px; border-radius: 8px; }
+.mk-gate::after { width: 10px; left: -5px; border: 0; background: repeating-linear-gradient(180deg, #ffd23f 0 10px, #e63946 10px 20px); opacity: .7; }
+.mk-start::after { width: 12px; left: -6px; border: 0; background: repeating-conic-gradient(#1d1d1d 0 25%, #fff 0 50%) 0 0 / 12px 12px; opacity: .85; }
+.mk-start .mk-label { font-family: var(--font-zh-fun); font-size: 14px; background: var(--green); color: #fff; border: 2px solid var(--ink); padding: 1px 8px; top: calc(var(--sky-h) - 28px); }
+@media (max-width: 760px) {
+  .et { --sky-h: 70px; }
+  .et-mtn, .et-mtn svg { height: 50px; }
+}
+
+/* ===== 단원 · 연습 방식 선택 ===== */
+.sp-mode { margin-top: 14px; }
+#unit-chips .chip b { color: var(--red); font-weight: 900; margin-right: 2px; }
+#unit-chips .chip.on b { color: #fff3c4; }
+.chip-all { border-style: dashed; }
+.mode-cards { display: grid; grid-template-columns: 1fr; gap: 6px; max-width: 460px; margin: 0 auto; }
+.mode-card { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border-radius: 14px; border: 2px solid #d8c39c; background: #fff; cursor: pointer; font: inherit; color: var(--ink); transition: transform .12s; }
+.mode-card:hover { transform: translateY(-2px); }
+.mode-card .mc-ico { font-size: 28px; line-height: 1; }
+.mode-card .mc-txt { display: grid; gap: 1px; }
+.mode-card .mc-ico { width: 34px; text-align: center; }
+.mode-card b { font-family: var(--font-fun); font-weight: 400; font-size: 17px; }
+.mode-card b i { font-style: normal; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #f1e3c6; font-size: 13px; margin-right: 2px; vertical-align: 2px; }
+.mode-card small { font-size: 13px; color: #7a6450; line-height: 1.35; }
+.mode-card.on { background: var(--red-2); border-color: var(--ink); box-shadow: 0 4px 0 var(--ink); color: #fff; }
+.mode-card.on small { color: #ffe6d2; }
+.mode-card.on b i { background: #fff3c4; color: var(--ink); }
+
+/* 병음 따라 치기: 병음을 크게, 아래에 한자·뜻 */
+.q-word.is-py { font-family: var(--font-py); font-weight: 400; letter-spacing: .01em; text-shadow: none; }
+.q-sub { margin-top: 2px; font-size: 18px; color: #7a6450; font-weight: 700; }
+.q-sub [lang="zh"] { font-family: var(--font-zh); font-size: 22px; color: var(--ink); margin-right: 6px; }
+.howto-modes { display: grid; gap: 4px; margin-top: 6px; padding: 8px 10px; background: #fff8e7; border-radius: 10px; font-size: 14px; }
+#unit-chips [lang="zh"] { font-family: var(--font-zh); font-weight: 700; }
+
+/* 병음이 나오는 곳은 모두 Asia병음 글꼴 */
+.answer-input, .rv-py, .q-reveal .rv-py, .howto code, .howto-ex code { font-family: var(--font-py); font-weight: 400; font-synthesis: none; }
+.q-word.is-py { font-synthesis: none; }
+.answer-input::placeholder { font-family: var(--font-ko); }

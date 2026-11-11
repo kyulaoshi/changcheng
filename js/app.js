@@ -1,26 +1,29 @@
 // =====================================================================
 //  长城竞速 — 학생용 게임 (서버 없음 · 각자 기기에서 플레이)
-//  흐름: 시작(단어장 확인/주제 선택) → 이름·캐릭터 → 3·2·1 → 제한 시간 동안 최대한 멀리 → 결과 카드
-//  · 단어장: 선생님이 만든 링크(#w=...) 안에 들어 있거나, 기본 주제별 단어장
+//  흐름: 시작(단원·연습 방식 선택) → 이름·캐릭터 → 3·2·1 → 제한 시간 동안 최대한 멀리 → 결과 카드
+//  · 단원별 단어: js/units.js
+//  · 연습 방식: ① 병음 따라 치기 ② 뜻 보고 병음+성조 ③ 뜻 보고 병음(성조 제외)
 //  · 이 기기의 최고 기록이 '유령'으로 옆 레인에서 함께 달림 (브라우저에만 저장)
 // =====================================================================
-import { RaceTrack } from './race.js';
+import { EndlessTrack, fmtMeters } from './endless.js';
 import { CHARACTERS, CHAR_BY_ID, charSVG } from './characters.js';
-import { WORD_PRESETS } from './words.js';
-import { normalizePinyin, prepareAnswer, hasHangul } from './pinyin.js';
-import { decodeSet, codeFromLocation, setKey } from './wordlink.js';
+import { UNITS, MODES } from './units.js';
+import { normalizePinyin, prepareAnswer, hasHangul, numbersToMarks, gradeAnswer } from './pinyin.js';
 import { sfx, setSound, isSoundOn, unlockAudioOnFirstGesture } from './sound.js';
 import { $, $$, esc, fmtClock, accuracy, toast, openModal, wireModals, startFireworks } from './common.js';
 
-const LAP = 20;                 // 한 구간 = 정답 20개 = 2km
 const METER_PER_WORD = 100;
 const DEFAULT_SECONDS = 300;   // 기본 제한 시간 5분
 const LS_CHAR = 'ccjs-character';
-const LS_PRESET = 'ccjs-preset';
-const LS_BEST = 'ccjs-best-';   // + 단어장 열쇠
+const LS_UNIT = 'ccjs-unit';
+const LS_MODE = 'ccjs-mode';
+const LS_BEST = 'ccjs-best2-';  // + 단원·방식·단어 열쇠
+const ALL_ID = 'all';
 
 const S = {
-  set: null,          // { title, seconds, shuffle, words, fromLink }
+  set: null,          // { title, seconds, shuffle, tones, mode, words }
+  unitId: null,
+  modeId: 'plain',
   name: '',
   character: 'panda',
   run: null,
@@ -34,7 +37,7 @@ let track = null;
 
 const lsGet = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-const fmtDist = n => { const m = n * METER_PER_WORD; return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${m}m`; };
+const fmtDist = n => fmtMeters(n * METER_PER_WORD);   // 정답 수 → '2,300m'
 const fmtTime = s => (s % 60 === 0 ? `${s / 60}분` : s > 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`);
 
 function show(name) {
@@ -66,16 +69,9 @@ async function init() {
   $('#btn-retry').addEventListener('click', () => startRun());
   $('#btn-home').addEventListener('click', () => show('home'));
   $('#btn-quit').addEventListener('click', quitRun);
-  window.addEventListener('hashchange', () => location.reload());
 
-  track = new RaceTrack($('#track'), { meId: 'me', total: LAP, big: true });
-  track.onEvent = (type, p) => {
-    if (p.id !== 'me') return;
-    if (type === 'boost-s') { sfx.boost(); flashBoost('🔥 3연속! 부스터!'); }
-    if (type === 'boost-l') { sfx.boostBig(); flashBoost(`⚡ ${p.combo}연속! 슈퍼 부스터!!`); }
-  };
-
-  await loadWordSet();
+  track = new EndlessTrack($('#track'));
+  renderPicker();
 }
 
 function renderSoundBtn() {
@@ -84,52 +80,53 @@ function renderSoundBtn() {
 }
 
 // ---------------------------------------------------------------------
-// 단어장: 링크 → 없으면 주제 선택
+// 단원 · 연습 방식 선택
 // ---------------------------------------------------------------------
-async function loadWordSet() {
-  const code = codeFromLocation();
-  if (code) {
-    try {
-      const set = await decodeSet(code);
-      S.set = { ...set, fromLink: true };
-      $('#set-picker').classList.add('hidden');
-      const b = $('#set-banner');
-      b.classList.remove('hidden');
-      b.innerHTML = `<span class="sb-label">📚 선생님 단어장</span><b>${esc(set.title)}</b><span class="sb-meta">단어 ${set.words.length}개 · ⏱️ ${fmtTime(set.seconds)}</span>`;
-      $('#start-sub').textContent = `“${set.title}” 단어로 ${fmtTime(set.seconds)} 레이스!`;
-      return;
-    } catch (err) {
-      const e = $('#link-error');
-      e.classList.remove('hidden');
-      e.textContent = String(err.message) === 'OLD_BROWSER'
-        ? '이 브라우저는 선생님 단어장 링크를 열 수 없어요. 크롬·엣지·사파리 최신 버전으로 열어 주세요. (지금은 기본 단어장으로 할 수 있어요)'
-        : '단어장 링크가 잘렸거나 잘못됐어요. 선생님께 링크를 다시 받아 주세요. (지금은 기본 단어장으로 할 수 있어요)';
-    }
-  }
-  renderPresetChips();
+const MODE_BY_ID = Object.fromEntries(MODES.map(m => [m.id, m]));
+const unitLabel = u => (u.id === ALL_ID ? '전체 단원' : `${u.no}단원 ${u.title}`);
+function getUnit(id) {
+  if (id === ALL_ID) return { id: ALL_ID, no: '', title: '전체 단원', words: UNITS.flatMap(u => u.words) };
+  return UNITS.find(u => u.id === id);
 }
 
-function renderPresetChips() {
-  const saved = lsGet(LS_PRESET);
-  $('#preset-chips').innerHTML = WORD_PRESETS.map(p => `
-    <button type="button" class="chip" role="radio" aria-checked="false" data-preset="${p.id}">${esc(p.name)} <small>${p.words.length}</small></button>`).join('');
-  $('#preset-chips').addEventListener('click', e => {
-    const b = e.target.closest('[data-preset]');
-    if (b) { choosePreset(b.dataset.preset); sfx.click(); }
+function renderPicker() {
+  $('#unit-chips').innerHTML = UNITS.map(u => `
+    <button type="button" class="chip" role="radio" aria-checked="false" data-unit="${u.id}"><b>${esc(u.no)}단원</b> <span${/[\u4e00-\u9fff]/.test(u.title) ? ' lang="zh"' : ''}>${esc(u.title)}</span> <small>${u.words.length}</small></button>`).join('')
+    + `<button type="button" class="chip chip-all" role="radio" aria-checked="false" data-unit="${ALL_ID}">🌏 전체 단원 <small>${UNITS.reduce((n, u) => n + u.words.length, 0)}</small></button>`;
+  $('#unit-chips').addEventListener('click', e => {
+    const b = e.target.closest('[data-unit]');
+    if (b) { S.unitId = b.dataset.unit; sfx.click(); applyChoice(); }
   });
-  choosePreset(WORD_PRESETS.some(p => p.id === saved) ? saved : WORD_PRESETS[0].id);
+  $('#mode-cards').innerHTML = MODES.map((m, i) => `
+    <button type="button" class="mode-card" role="radio" aria-checked="false" data-mode="${m.id}">
+      <span class="mc-ico">${m.icon}</span>
+      <span class="mc-txt"><b><i>${i + 1}</i> ${esc(m.name)}</b><small>${esc(m.desc)}</small></span>
+    </button>`).join('');
+  $('#mode-cards').addEventListener('click', e => {
+    const b = e.target.closest('[data-mode]');
+    if (b) { S.modeId = b.dataset.mode; sfx.click(); applyChoice(); }
+  });
+  const su = lsGet(LS_UNIT), sm = lsGet(LS_MODE);
+  S.unitId = getUnit(su) ? su : UNITS[0].id;
+  S.modeId = MODE_BY_ID[sm] ? sm : 'plain';
+  applyChoice();
 }
 
-function choosePreset(id) {
-  const p = WORD_PRESETS.find(x => x.id === id);
-  $$('#preset-chips .chip').forEach(c => {
-    const on = c.dataset.preset === id;
-    c.classList.toggle('on', on);
-    c.setAttribute('aria-checked', String(on));
-  });
-  S.set = { title: p.name, seconds: DEFAULT_SECONDS, shuffle: true, words: p.words, fromLink: false };
-  lsSet(LS_PRESET, id);
-  $('#start-sub').textContent = `“${p.name}” 단어로 ${fmtTime(DEFAULT_SECONDS)} 레이스!`;
+function applyChoice() {
+  const u = getUnit(S.unitId), m = MODE_BY_ID[S.modeId];
+  $$('#unit-chips .chip').forEach(c => { const on = c.dataset.unit === u.id; c.classList.toggle('on', on); c.setAttribute('aria-checked', String(on)); });
+  $$('#mode-cards .mode-card').forEach(c => { const on = c.dataset.mode === m.id; c.classList.toggle('on', on); c.setAttribute('aria-checked', String(on)); });
+  S.set = { title: unitLabel(u), unitId: u.id, seconds: DEFAULT_SECONDS, shuffle: true, tones: m.tones, mode: m.id, modeName: m.name, modeIcon: m.icon, words: u.words };
+  lsSet(LS_UNIT, u.id); lsSet(LS_MODE, m.id);
+  $('#start-sub').textContent = `${unitLabel(u)} · ${m.name} · ${fmtTime(DEFAULT_SECONDS)}`;
+}
+
+/** 기록 저장용 열쇠 (같은 단원·같은 방식·같은 단어 = 같은 열쇠) */
+function setKey(set) {
+  const s = [set.unitId, set.mode, set.seconds, ...set.words.map(w => `${w.ko}|${w.py}`)].join('\n');
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return `${set.unitId}-${set.mode}-${(h >>> 0).toString(36)}`;
 }
 
 // ---------------------------------------------------------------------
@@ -164,7 +161,10 @@ function selectChar(id) {
 
 function goJoin() {
   if (!S.set) return;
-  $('#join-set').innerHTML = `📚 <b>${esc(S.set.title)}</b> · 단어 ${S.set.words.length}개 · ⏱️ ${fmtTime(S.set.seconds)}`;
+  $('#join-set').innerHTML = `📚 <b>${esc(S.set.title)}</b> · 단어 ${S.set.words.length}개 · ⏱️ ${fmtTime(S.set.seconds)}<br>${S.set.modeIcon} <b>${esc(S.set.modeName)}</b>${S.set.tones ? ' · 성조까지 채점' : ' · 성조 채점 안 함'}`;
+  $('#join-tip').innerHTML = S.set.tones
+    ? '💡 한/영 키를 <b>영어</b>로! 성조는 숫자로 쳐요: <b>jia1ren2</b> → jiārén'
+    : '💡 한/영 키를 <b>영어</b>로! 성조 없이 <b>pingguo</b>처럼 쳐요.';
   show('join');
   setTimeout(() => $('#join-name').focus(), 50);
 }
@@ -205,27 +205,34 @@ function startRun() {
     seq: makeSeq(set.words.length, set.shuffle, Math.max(200, set.seconds * 3)),
     limitMs: set.seconds * 1000,
     startAt: Date.now() + 3200,
-    k: 0, correct: 0, wrong: 0, combo: 0, maxCombo: 0, lastT: -1000, lap: 0,
+    k: 0, correct: 0, wrong: 0, combo: 0, maxCombo: 0, lastT: -1000,
     times: [],                 // 정답 시각 (유령용)
-    done: false, lastCount: null, ghostShown: -1,
+    done: false, lastCount: null, ghostShown: 0,
     me: { id: 'me', name: S.name, character: S.character, joined_at: '0' },
   };
   S.run = run;
-  $('#hud-mode').textContent = set.fromLink ? '선생님 단어장' : set.title;
+  $('#hud-mode').textContent = `${set.title} · ${set.modeName}`;
+  $('#quiz').dataset.mode = set.mode;
+  $('#hint-text').innerHTML = set.mode === 'copy'
+    ? '⌨️ 보이는 병음을 <b>성조까지</b> 따라 쳐요 · 성조는 숫자로: <kbd>jia1ren2</kbd> → jiārén · <kbd>Enter</kbd>로 제출'
+    : set.tones
+      ? '🎵 <b>성조까지 채점!</b> 숫자로 입력하면 기호로 바뀌어요: <kbd>jia1ren2</kbd> → jiārén · <kbd>Enter</kbd>로 제출'
+      : '성조는 채점하지 않아요 · 병음만 영어로 · 띄어쓰기 상관없음 · <kbd>Enter</kbd>로 제출';
+  $('#answer').placeholder = set.tones ? '병음 + 성조 숫자 (예: jia1ren2)' : '중국어 병음을 입력하세요 (성조 없이)';
+  $('#tone-tip').classList.add('hidden');
   $('#q-reveal').innerHTML = '';
   $('#quiz-done').classList.add('hidden');
   $('#answer').value = '';
   show('game');
+  const lanes = [{ id: 'me', name: S.name, character: S.character }];
+  if (best) lanes.push({ id: 'ghost', ghost: true, name: `👻 ${best.name || '최고 기록'}`, character: best.character || 'panda' });
+  track.setPlayers(lanes);
   track.reset();
-  track.setTotal(LAP);
-  updateTrack(true);
   renderHud();
   renderQuestion(true);
   lockInput(true);
   startTicker();
 }
-
-function lapPos(run) { return run.correct - run.lap * LAP; }
 
 function ghostCorrect(run, t) {
   if (!run.best?.times) return 0;
@@ -234,33 +241,12 @@ function ghostCorrect(run, t) {
   return n;
 }
 
-function playersFor(run, t) {
-  const list = [{ ...run.me, correct: lapPos(run), wrong: run.wrong, combo: run.combo, finish_ms: null }];
-  if (run.best) {
-    const g = ghostCorrect(run, t);
-    run.ghostShown = g;
-    list.push({
-      id: 'ghost', name: `👻 ${run.best.name || '최고 기록'}`, character: run.best.character || 'panda', joined_at: '1',
-      correct: Math.max(0, Math.min(LAP, g - run.lap * LAP)), wrong: 0, combo: 0, finish_ms: null,
-    });
-  }
-  return list;
-}
-
-function updateTrack(instant = false) {
-  const run = S.run;
-  const t = Math.max(0, Date.now() - run.startAt);
-  const ps = playersFor(run, t);
-  if (instant) ps.forEach(p => track.jump(p.id, p.correct));
-  track.update(ps);
-}
-
 function renderHud() {
   const run = S.run;
   $('#hud-dist').textContent = fmtDist(run.correct);
   $('#hud-correct').textContent = run.correct;
   $('#hud-wrong').textContent = run.wrong;
-  $('#hud-lap').textContent = run.lap + 1;
+  $('#hud-best').textContent = run.best ? fmtDist(run.best.correct) : '—';
 }
 
 function currentWord(run) { return run.words[run.seq[run.k % run.seq.length]]; }
@@ -270,9 +256,16 @@ function renderQuestion(force = false) {
   const w = currentWord(run);
   $('#q-num').textContent = run.k + 1;
   const qw = $('#q-word');
-  if (force || qw.textContent !== w.ko) {
-    qw.textContent = w.ko;
+  const copy = S.set.mode === 'copy';
+  const main = copy ? w.py : w.ko;
+  if (force || qw.textContent !== main || qw.dataset.k !== String(run.k)) {
+    qw.textContent = main;
+    qw.dataset.k = String(run.k);
+    qw.classList.toggle('is-py', copy);
     qw.classList.remove('pop'); void qw.offsetWidth; qw.classList.add('pop');
+    const sub = $('#q-sub');
+    sub.classList.toggle('hidden', !copy);
+    sub.innerHTML = copy ? `<span lang="zh">${esc(w.zh || '')}</span> <span>${esc(w.ko)}</span>` : '';
   }
   const combo = $('#q-combo');
   combo.classList.toggle('hidden', run.combo < 2);
@@ -335,7 +328,10 @@ function tick() {
   $('#hud-timebar').style.transform = `scaleX(${(remain / run.limitMs).toFixed(4)})`;
 
   // 유령은 시간에 따라 움직임
-  if (run.best && toStart <= 0 && ghostCorrect(run, now - run.startAt) !== run.ghostShown) updateTrack();
+  if (run.best && toStart <= 0) {
+    const g = ghostCorrect(run, now - run.startAt);
+    if (g !== run.ghostShown) { run.ghostShown = g; track.setMeters('ghost', g * METER_PER_WORD); }
+  }
 
   if (toStart <= 0 && remain <= 0) finishRun();
 }
@@ -343,8 +339,19 @@ function tick() {
 // ---------- 입력 ----------
 function wireAnswerInput() {
   const inp = $('#answer');
-  inp.addEventListener('input', () => {
+  inp.addEventListener('input', e => {
     inp.classList.remove('wrong', 'right');
+    if (!$('#tone-tip').classList.contains('hidden')) { $('#tone-tip').classList.add('hidden'); $('#hint-text').classList.remove('hidden'); }
+    // 숫자 성조 → 기호: jia1ren2 → jiārén (한글 조합 중에는 건드리지 않음)
+    if (!e.isComposing && /[A-Za-zÜüVv][0-5]/.test(inp.value)) {
+      const pos = inp.selectionStart ?? inp.value.length;
+      const before = numbersToMarks(inp.value.slice(0, pos));
+      const after = numbersToMarks(inp.value.slice(pos));
+      if (before + after !== inp.value) {
+        inp.value = before + after;
+        inp.setSelectionRange(before.length, before.length);
+      }
+    }
     const h = hasHangul(inp.value);
     $('#ime-warn').classList.toggle('hidden', !h);
     $('#hint-text').classList.toggle('hidden', h);
@@ -372,35 +379,41 @@ function submitAnswer() {
     S.imeHintShown = true;
     toast(`한글로 입력돼서 영어(${text})로 바꿔 채점했어요. 한/영 키를 눌러 주세요!`, 'info', 3500);
   }
-  const w = currentWord(run);
-  if (norm === normalizePinyin(w.py)) {
+  let w = currentWord(run);
+  let grade = gradeAnswer(text, w.py, !!S.set.tones);
+  // 뜻이 같은 단어가 여럿이면(예: 미안합니다 → duìbuqǐ / bù hǎoyìsi) 어느 것이든 정답
+  if (grade !== 'correct' && S.set.mode !== 'copy') {
+    for (const o of S.set.words) {
+      if (o === w || o.ko !== w.ko) continue;
+      const g = gradeAnswer(text, o.py, !!S.set.tones);
+      if (g === 'correct') { grade = g; w = o; break; }
+      if (g === 'tone') grade = 'tone';
+    }
+  }
+  if (grade === 'correct') {
     run.k++; run.correct++; run.combo++; run.maxCombo = Math.max(run.maxCombo, run.combo);
     run.times.push(t);
     sfx.correct();
     inp.value = '';
     inp.classList.remove('wrong'); inp.classList.add('right');
     setTimeout(() => inp.classList.remove('right'), 350);
-    $('#ime-warn').classList.add('hidden'); $('#hint-text').classList.remove('hidden');
+    $('#ime-warn').classList.add('hidden'); $('#hint-text').classList.remove('hidden'); $('#tone-tip').classList.add('hidden');
     showReveal(w.zh, w.py);
-    track.nudge('me', lapPos(run), run.combo);
-    if (lapPos(run) >= LAP) {
-      sfx.finish();
-      flashBoost(`🏯 ${run.lap + 1}구간 돌파! ${fmtDist(run.correct)}`);
-      setTimeout(() => {
-        if (S.run !== run || run.done) return;
-        run.lap = Math.floor(run.correct / LAP);
-        updateTrack(true);
-        renderHud();
-      }, 650);
-    }
+    track.setMeters('me', run.correct * METER_PER_WORD);
+    if (run.combo >= 5 && run.combo % 5 === 0) { track.boost('me', 'boost-l'); sfx.boostBig(); flashBoost(`⚡ ${run.combo}연속! 슈퍼 부스터!!`); }
+    else if (run.combo === 3) { track.boost('me', 'boost-s'); sfx.boost(); flashBoost('🔥 3연속! 부스터!'); }
+    else if (run.correct % 10 === 0) { sfx.finish(); flashBoost(`🏯 ${fmtDist(run.correct)} 돌파!`); }
   } else {
     run.wrong++; run.combo = 0;
     sfx.wrong();
     inp.classList.remove('right'); inp.classList.add('wrong');
     shake(inp);
     if (navigator.vibrate) navigator.vibrate(80);
+    // 철자는 맞고 성조만 틀렸을 때 알려 줌
+    $('#tone-tip').classList.toggle('hidden', grade !== 'tone');
+    $('#hint-text').classList.toggle('hidden', grade === 'tone');
+    if (grade === 'tone') inp.value = numbersToMarks(text);
     inp.select();
-    updateTrack();
   }
   renderQuestion();
   renderHud();
@@ -469,6 +482,7 @@ function showResult(run) {
       <div class="cert-who">
         <b>${esc(S.name)}</b>
         <span>📚 ${esc(S.set.title)} · ⏱️ ${fmtTime(S.set.seconds)}</span>
+        <span>${S.set.modeIcon} ${esc(S.set.modeName)}</span>
         <span>🗓️ ${when}</span>
       </div>
       <div class="cert-seal" lang="zh">完成</div>
@@ -479,7 +493,7 @@ function showResult(run) {
       <div><small>오답</small><b>${run.wrong}</b></div>
       <div><small>정확도</small><b>${acc.toFixed(1)}%</b></div>
       <div><small>최고 연속</small><b>${run.maxCombo}</b></div>
-      <div><small>구간</small><b>${Math.floor(run.correct / LAP) + 1}</b></div>
+      <div><small>총 입력</small><b>${run.correct + run.wrong}</b></div>
     </div>
     ${bestLine}`;
   $('#review-list').innerHTML = S.set.words.map(w => `
